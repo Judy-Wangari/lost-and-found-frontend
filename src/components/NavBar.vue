@@ -1,69 +1,121 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/services/auth'
 
+// router & route
 const router = useRouter()
+const route = useRoute()
+
+// auth
 const { isAuthenticated, logout, user } = useAuth()
 
+// emit for sidebar toggle
+const emit = defineEmits(['toggle-drawer'])
+
+// logout
 const handleLogout = async () => {
   await logout()
   router.push('/')
 }
+
+// Go to profile
+const goToProfile = () => {
+  router.push('/student/profile')
+}
+
+// ✅ CHECK IF USER IS ON STUDENT DASHBOARD
+const isDashboard = () => {
+  return route.path.startsWith('/student')
+}
 </script>
 
 <template>
-  <v-app-bar color="primary" elevation="2" height="70" class="border-b" >
-    <v-container class="px-6">
-      <div class="d-flex align-center w-100">
+  <v-app-bar color="primary" elevation="2" height="70">
 
-        <!-- Left: Logo (Clickable to Landing Page) -->
-        <div 
-          class="d-flex align-center gap-3 cursor-pointer" 
-          @click="router.push('/')"
+    <!-- ✅ Menu icon ONLY on dashboard -->
+    <v-app-bar-nav-icon 
+      v-if="isAuthenticated() && isDashboard()" 
+      @click="emit('toggle-drawer')" 
+      color="secondary"
+    />
+
+    <!-- Logo -->
+    <v-toolbar-title 
+      class="text-secondary font-weight-bold cursor-pointer"
+      @click="router.push('/')"
+    >
+      CampusFind
+    </v-toolbar-title>
+
+    <v-spacer />
+
+    <!-- Links -->
+    <div class="d-flex align-center">
+
+      <!-- Home -->
+      <v-btn 
+        v-if="isAuthenticated()" 
+        variant="text" 
+        color="secondary"
+        @click="router.push(
+          user?.role === 'admin' 
+            ? '/admin/dashboard' 
+            : user?.role === 'security' 
+            ? '/security/dashboard' 
+            : '/student/dashboard'
+        )"
+      >
+        Home
+      </v-btn>
+
+      <!-- Public -->
+      <v-btn variant="text" color="secondary" @click="router.push('/about')">
+        About
+      </v-btn>
+
+      <v-btn variant="text" color="secondary" @click="router.push('/contact')">
+        Contact
+      </v-btn>
+
+      <!-- NOT logged in -->
+      <template v-if="!isAuthenticated()">
+        <v-btn to="/login" color="secondary" variant="text">
+          Login
+        </v-btn>
+      </template>
+
+      <!-- Logged in -->
+      <template v-else>
+
+        <!-- Notifications -->
+        <v-btn icon @click="router.push('/student/notifications')">
+          <v-icon>mdi-bell-outline</v-icon>
+        </v-btn>
+
+        <!-- Avatar -->
+        <v-avatar 
+          size="32" 
+          color="secondary" 
+          class="mx-3 cursor-pointer" 
+          @click="goToProfile"
         >
-          <h1 class="text-h5 font-weight-bold text-secondary">CampusFind</h1>
-        </div>
+          <v-img
+            v-if="user?.profile_picture"
+            :src="user.profile_picture"
+            cover
+          />
+          <span v-else class="text-white text-caption font-weight-bold">
+            {{ user?.first_name?.charAt(0)?.toUpperCase() }}
+          </span>
+        </v-avatar>
 
-        <v-spacer />
+        <!-- Logout -->
+        <v-btn color="error" variant="text" @click="handleLogout">
+          Logout
+        </v-btn>
 
-        <!-- Right Side Links -->
-        <div class="d-flex align-center gap-8">
+      </template>
 
-         
-
-         <!-- Home appears only when logged in -->
-          <router-link 
-            v-if="isAuthenticated()" 
-            :to="user?.role === 'admin' ? '/admin/dashboard' : user?.role === 'security' ? '/security/dashboard' : '/student/dashboard'" 
-            class="text-secondary text-decoration-none font-weight-medium pr-10">
-            Home
-          </router-link>
-          
-           
-          <router-link to="/about" class="text-secondary text-decoration-none pr-10">About Us</router-link>
-          <router-link to="/contact" class="text-secondary text-decoration-none pr-10">Contact Us</router-link>
-
-          <!-- Login / Logout -->
-          <template v-if="!isAuthenticated()">
-            <v-btn 
-              to="/login" 
-              color="secondary" 
-              variant="text">
-              Login
-            </v-btn>
-          </template>
-
-          <template v-else>
-            <v-btn 
-              color="error" 
-              variant="text"
-              @click="handleLogout">
-              Logout
-            </v-btn>
-          </template>
-
-        </div>
-      </div>
-    </v-container>
+    </div>
   </v-app-bar>
 </template>

@@ -9,6 +9,7 @@ import AboutUs from '@/components/AboutUs.vue'
 import ContactUs from '@/components/ContactUs.vue'
 import AdminDashboard from '@/components/admin/AdminDashboard.vue'
 import StudentDashboard from '@/components/student/StudentDashboard.vue'
+import SecurityDashboard from '@/components/security/SecurityDashboard.vue'
 
 
 
@@ -49,12 +50,18 @@ const router = createRouter({
       path: '/admin/dashboard',
       name: 'admin',
       component: AdminDashboard,
-      meta: { requiresAuth: true, role: 'admin' }
+      meta: { requiresAuth: true, role: 'admin', hideNavbar: true }
+    },
+     {
+      path: '/security/dashboard',
+      name: 'security',
+      component: SecurityDashboard,
+      meta: { requiresAuth: true, role: 'security', hideNavbar: true }
     },
      {
   path: '/student',
   component: StudentDashboard,
-  meta: { requiresAuth: true, role: 'student' },
+  meta: { requiresAuth: true, role: 'student', hideNavbar: true },
   children: [
     { path: 'dashboard', name: 'student-dashboard', component: () => import('@/components/student/Overview.vue') },
     { path: 'found-items', name: 'found-items', component: () => import('@/components/student/FoundItems.vue') },
@@ -73,34 +80,34 @@ const router = createRouter({
   
     ],
 })
-// Route guards
-router.beforeEach((to, from, next) => {
+
+
+
+//  Route guards 
+router.beforeEach((to, from) => {
   const token = sessionStorage.getItem('authToken')
   const userStr = sessionStorage.getItem('user')
   const user = userStr ? JSON.parse(userStr) : null
 
-  // If route requires auth and no token --- redirect to login
-  if(to.meta.requiresAuth && !token){
-    return next('/login')
+  // 1. If route requires auth and no token --- redirect to login
+  if (to.meta.requiresAuth && !token) {
+    return '/login'
   }
 
-  // If route requires specific role and user does not have it
-  if(to.meta.role && user && user.role !== to.meta.role){
-    // Redirect to their correct dashboard
-    if(user.role === 'admin') return next('/admin/dashboard')
-    if(user.role === 'security') return next('/security/dashboard')
-    return next('/student/dashboard')
+  // 2. If route requires specific role and user does not have it
+  if (to.meta.role && user && user.role !== to.meta.role) {
+    if (user.role === 'admin') return '/admin/dashboard'
+    if (user.role === 'security') return '/security/dashboard'
+    return '/student/dashboard'
   }
 
-  // If logged in user tries to access login or register --- redirect to dashboard
-  if(to.meta.guestOnly && token){
-    if(user?.role === 'admin') return next('/admin/dashboard')
-    if(user?.role === 'security') return next('/security/dashboard')
-    return next('/student/dashboard')
+  // 3. If logged in user tries to access guest-only routes (login/register)
+  if (to.meta.guestOnly && token) {
+    if (user?.role === 'admin') return '/admin/dashboard'
+    if (user?.role === 'security') return '/security/dashboard'
+    return '/student/dashboard'
   }
 
-  next()
+  // If none of the above, navigation is automatically allowed (no need to return anything, or return true)
 })
-
-
 export default router
