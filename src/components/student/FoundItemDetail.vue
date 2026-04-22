@@ -215,7 +215,20 @@ onMounted(() => {
             </v-alert>
 
             <!-- Action Buttons --- only show if item is listed -->
-            <div v-if="item.status === 'listed'" class="d-flex gap-3">
+          <div v-if="item.status === 'listed'">
+
+            <!-- User is the finder --- cannot claim own post -->
+            <v-alert 
+              v-if="item.posted_by === user?.id" 
+              type="info" 
+              density="compact"
+              class="mb-3"
+            >
+              This is your posted item. You cannot claim your own found post.
+            </v-alert>
+
+            <!-- User is not the finder --- can claim -->
+            <div v-else class="d-flex gap-3">
               <v-btn 
                 color="secondary" 
                 size="large"
@@ -231,6 +244,8 @@ onMounted(() => {
                 Cancel
               </v-btn>
             </div>
+
+          </div>
 
             <!-- Appeal Button --- shows after failed claim -->
             <div v-if="claimError" class="mt-4">
