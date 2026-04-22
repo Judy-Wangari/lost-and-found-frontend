@@ -101,7 +101,7 @@ const isDashboard = () => {
         >
           <v-img
             v-if="user?.profile_picture"
-            :src="user.profile_picture"
+            :src="user.profile_picture.startsWith('http') ? user.profile_picture : `http://127.0.0.1:8000/storage/${user.profile_picture}`"
             cover
           />
           <span v-else class="text-white text-caption font-weight-bold">

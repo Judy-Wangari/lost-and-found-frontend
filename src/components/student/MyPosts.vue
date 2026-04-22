@@ -20,8 +20,8 @@ const fetchMyPosts = async () => {
   loading.value = true
   try {
     const [foundRes, lostRes] = await Promise.all([
-      api.get('/items'),
-      api.get('/lost-items')
+     api.get('/my-items'),
+     api.get('/my-lost-items')
     ])
     foundPosts.value = foundRes.data
     lostPosts.value = lostRes.data

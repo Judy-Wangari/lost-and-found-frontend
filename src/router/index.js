@@ -73,6 +73,11 @@ const router = createRouter({
     { path: 'notifications', name: 'notifications', component: () => import('@/components/student/Notifications.vue') },
     { path: 'settings', name: 'settings', component: () => import('@/components/student/Settings.vue') },
     { path: 'profile', name: 'profile', component: () => import('@/components/student/Profile.vue') },
+    {
+  path: 'found-items/:id',
+  name: 'found-item-detail',
+  component: () => import('@/components/student/FoundItemDetail.vue')
+},
   ]
 },
   

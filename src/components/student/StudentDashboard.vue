@@ -50,7 +50,11 @@ const isActive = (itemRoute) => route.path.startsWith(itemRoute)
     <div class="pa-4 mt-2">
       <div class="d-flex align-center gap-3">
         <v-avatar size="40" color="secondary">
-          <v-img v-if="user?.profile_picture" :src="user.profile_picture" cover />
+          <v-img 
+            v-if="user?.profile_picture" 
+            :src="user.profile_picture.startsWith('http') ? user.profile_picture : `http://127.0.0.1:8000/storage/${user.profile_picture}`"
+            cover 
+          />
           <span v-else class="text-white font-weight-bold">
             {{ user?.first_name?.charAt(0)?.toUpperCase() }}
           </span>
