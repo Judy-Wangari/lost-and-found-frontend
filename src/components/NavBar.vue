@@ -1,11 +1,31 @@
 <script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/services/auth'
+import api from '@/services/api'
+
 
 const router = useRouter()
 const route = useRoute()
 const { isAuthenticated, logout, user } = useAuth()
 const emit = defineEmits(['toggle-drawer'])
+
+const unreadCount = ref(0)
+
+const fetchUnreadCount = async () => {
+  try {
+    if(!isAuthenticated()) return
+    const response = await api.get('/notifications/unread-count')
+    unreadCount.value = response.data.unread_count
+  } catch(e) {
+    console.error(e)
+  }
+}
+
+// Refresh badge count every time route changes
+watch(() => route.path, () => {
+  fetchUnreadCount()
+})
 
 const handleLogout = async () => {
   await logout()
@@ -24,7 +44,7 @@ const goToProfile = () => {
 
 const goToNotifications = () => {
   if(user.value?.role === 'admin'){
-    router.push('/admin/dashboard')
+    router.push('/admin/notifications')  // we will add this route
   } else if(user.value?.role === 'security'){
     router.push('/security/dashboard')
   } else {
@@ -33,10 +53,19 @@ const goToNotifications = () => {
 }
 
 const isDashboard = () => {
-  return route.path.startsWith('/student') || 
-         route.path.startsWith('/admin') || 
+  return route.path.startsWith('/student') ||
+         route.path.startsWith('/admin') ||
          route.path.startsWith('/security')
 }
+
+onMounted(() => {
+  fetchUnreadCount()
+  window.addEventListener('notifications-read', fetchUnreadCount)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('notifications-read', fetchUnreadCount)
+})
 </script>
 
 <template>
@@ -90,8 +119,17 @@ const isDashboard = () => {
 
       <template v-else>
 
+        <!-- Bell with unread badge -->
         <v-btn icon @click="goToNotifications">
-          <v-icon>mdi-bell-outline</v-icon>
+          <v-badge
+            v-if="unreadCount > 0"
+            :content="unreadCount > 99 ? '99+' : String(unreadCount)"
+            color="error"
+            floating
+          >
+            <v-icon>mdi-bell-outline</v-icon>
+          </v-badge>
+          <v-icon v-else>mdi-bell-outline</v-icon>
         </v-btn>
 
         <v-avatar

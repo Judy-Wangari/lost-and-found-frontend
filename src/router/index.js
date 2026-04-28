@@ -77,6 +77,8 @@ const router = createRouter({
         { path: 'lost-items', name: 'admin-lost-items', meta: { hideNavbar: true }, component: () => import('@/components/admin/LostItems.vue') },
         { path: 'handovers', name: 'admin-handovers', meta: { hideNavbar: true }, component: () => import('@/components/admin/SecurityHandovers.vue') },
         { path: 'profile', name: 'admin-profile', meta: { hideNavbar: true }, component: () => import('@/components/admin/Profile.vue') },
+        { path: 'notifications', name: 'admin-notifications', component: () => import('@/components/admin/Notifications.vue') }
+       
       ]
     },
 

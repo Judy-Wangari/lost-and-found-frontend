@@ -35,7 +35,6 @@ const markAllRead = async () => {
   try {
     await api.post('/notifications/mark-all-read')
     notifications.value.forEach(n => n.is_read = true)
-    // Tell navbar to refresh its count
     window.dispatchEvent(new Event('notifications-read'))
   } catch(e) {
     console.error(e)
@@ -46,34 +45,15 @@ const markAllRead = async () => {
 
 const handleNotificationClick = (notification) => {
   if(notification.reference_type === 'claim'){
-    if(notification.type === 'admin_message'){
-      router.push({ 
-        name: 'claim-messages', 
-        params: { claimId: notification.reference_id },
-        query: { tab: 'admin' }
-      })
-    } else {
-      // claim_rejected, claim_approved, clarification_requested --- go to my-claims
-      router.push({ name: 'my-claims' })
-    }
+    router.push({ name: 'admin-claim-detail', params: { id: notification.reference_id } })
   } else if(notification.reference_type === 'appeal'){
-    if(notification.type === 'admin_message'){
-      // Admin messaged about an appeal --- go to my-appeals
-      router.push({ name: 'my-appeals' })
-    } else {
-      // appeal_submitted, appeal_under_review, appeal_resolved, appeal_rejected
-      router.push({ name: 'my-appeals' })
-    }
-  } else if(notification.reference_type === 'item'){
-    router.push({ name: 'found-item-detail', params: { id: notification.reference_id } })
-  } else if(notification.reference_type === 'lost_item'){
-    router.push({ name: 'lost-item-detail', params: { id: notification.reference_id } })
+    router.push({ name: 'admin-appeal-detail', params: { id: notification.reference_id } })
   }
 }
 
 const getNotificationIcon = (type) => {
   const icons = {
-    claim_submitted: 'mdi-clipboard-check',
+    claim_submitted: 'mdi-clipboard-plus',
     claim_approved: 'mdi-check-circle',
     claim_rejected: 'mdi-close-circle',
     clarification_requested: 'mdi-help-circle',
@@ -82,12 +62,7 @@ const getNotificationIcon = (type) => {
     appeal_under_review: 'mdi-gavel',
     appeal_resolved: 'mdi-gavel',
     appeal_rejected: 'mdi-gavel',
-    handover_requested: 'mdi-package-up',
-    handover_confirmed: 'mdi-package-check',
     item_collected: 'mdi-check-all',
-    inactivity_reminder: 'mdi-clock-alert',
-    item_matched: 'mdi-link-variant',
-    account_approved: 'mdi-account-check',
     admin_message: 'mdi-shield-account',
     general: 'mdi-bell',
   }
@@ -96,47 +71,32 @@ const getNotificationIcon = (type) => {
 
 const getNotificationColor = (type) => {
   const colors = {
+    claim_submitted: 'secondary',
     claim_approved: 'success',
     claim_rejected: 'error',
     clarification_requested: 'warning',
+    clarification_responded: 'secondary',
     appeal_submitted: 'warning',
     appeal_under_review: 'orange',
     appeal_resolved: 'success',
     appeal_rejected: 'error',
-    handover_confirmed: 'success',
     item_collected: 'success',
-    inactivity_reminder: 'warning',
-    account_approved: 'success',
     admin_message: 'secondary',
   }
   return colors[type] || 'secondary'
 }
 
-const unreadCount = ref(0)
-const fetchUnreadCount = async () => {
-  try {
-    const response = await api.get('/notifications/unread-count')
-    unreadCount.value = response.data.unread_count
-  } catch(e) {
-    console.error(e)
-  }
-}
-
 onMounted(() => {
   fetchNotifications()
-  fetchUnreadCount()
 })
 </script>
 
 <template>
   <div>
-    <!-- Header -->
     <div class="d-flex align-center justify-space-between mb-6">
       <div>
         <h2 class="text-h5 font-weight-bold text-secondary">Notifications</h2>
-        <p class="text-body-2 text-grey-darken-1 mt-1">
-          Stay updated on your items and claims
-        </p>
+        <p class="text-body-2 text-grey-darken-1 mt-1">Platform activity and alerts</p>
       </div>
       <v-btn
         v-if="notifications.some(n => !n.is_read)"
@@ -150,13 +110,11 @@ onMounted(() => {
       </v-btn>
     </div>
 
-    <!-- Loading -->
     <div v-if="loading" class="text-center pa-12">
       <v-progress-circular indeterminate color="secondary" />
     </div>
 
     <div v-else>
-      <!-- Notifications List -->
       <v-card
         v-for="notification in notifications"
         :key="notification.id"
@@ -167,50 +125,27 @@ onMounted(() => {
         @click="markAsRead(notification)"
       >
         <v-card-text class="d-flex align-center gap-4">
-          <!-- Icon -->
-          <v-avatar
-            size="44"
-            :color="getNotificationColor(notification.type)"
-            variant="tonal"
-          >
+          <v-avatar size="44" :color="getNotificationColor(notification.type)" variant="tonal">
             <v-icon :color="getNotificationColor(notification.type)">
               {{ getNotificationIcon(notification.type) }}
             </v-icon>
           </v-avatar>
-
-          <!-- Message -->
           <div class="flex-grow-1">
-            <p
-              class="text-body-2"
-              :class="!notification.is_read ? 'font-weight-bold' : ''"
-            >
+            <p class="text-body-2" :class="!notification.is_read ? 'font-weight-bold' : ''">
               {{ notification.message_body }}
             </p>
             <p class="text-caption text-grey mt-1">
               {{ new Date(notification.created_at).toLocaleString() }}
             </p>
           </div>
-
-          <!-- Unread dot -->
-          <v-icon
-            v-if="!notification.is_read"
-            color="secondary"
-            size="10"
-          >
-            mdi-circle
-          </v-icon>
+          <v-icon v-if="!notification.is_read" color="secondary" size="10">mdi-circle</v-icon>
         </v-card-text>
       </v-card>
 
-      <!-- Empty State -->
       <v-card v-if="notifications.length === 0" rounded="lg" elevation="0" class="pa-12 text-center bg-grey-lighten-4">
         <v-icon size="64" color="grey">mdi-bell-outline</v-icon>
         <h3 class="text-h6 text-grey mt-4">No notifications yet</h3>
-        <p class="text-body-2 text-grey mt-2">
-          You will be notified about your items and claims here
-        </p>
       </v-card>
     </div>
-
   </div>
 </template>

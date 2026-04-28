@@ -14,6 +14,7 @@ const sidebarItems = [
   { title: 'Overview', icon: 'mdi-view-dashboard', route: '/admin/dashboard' },
   { title: 'Claims', icon: 'mdi-clipboard-check', route: '/admin/claims' },
   { title: 'Appeals', icon: 'mdi-gavel', route: '/admin/appeals' },
+    { title: 'Notifications', icon: 'mdi-bell', route: '/admin/notifications' }, 
   { title: 'Users', icon: 'mdi-account-group', route: '/admin/users' },
   { title: 'Found Items', icon: 'mdi-magnify', route: '/admin/items' },
   { title: 'Lost Items', icon: 'mdi-help-circle', route: '/admin/lost-items' },
